@@ -49,7 +49,7 @@ async function sendCapi(buyer,eventId){
     event_name:"Purchase",
     event_time:Math.floor(Date.now()/1000),
     event_id:eventId,
-    action_source:"chat",
+    action_source:"website",
     user_data,
     custom_data:{value:Number(buyer.value),currency:buyer.currency || "BRL"}
   };
