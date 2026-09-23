@@ -69,7 +69,8 @@ async function sendAppEvents(buyer,eventId){
     _valueToSum:Number(buyer.value),
     fb_currency:buyer.currency || "BRL",
     event_id:eventId
-  };
+  }; if(buyer.email) attrs.em = sha(cleanEmail(buyer.email));
+if(buyer.phone) attrs.ph = sha(cleanPhone(buyer.phone));
   // App Events exige parâmetros compatíveis com o App configurado na Meta.
   const form=new URLSearchParams();
   form.set("access_token",process.env.META_ACCESS_TOKEN);
