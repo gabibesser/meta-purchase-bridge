@@ -14,8 +14,11 @@ for (const k of required) if (!process.env[k]) console.warn(`Missing env: ${k}`)
 const db = createClient(process.env.SUPABASE_URL || "", process.env.SUPABASE_KEY || "");
 const sha = v => crypto.createHash("sha256").update(v).digest("hex");
 const cleanEmail = v => (v || "").trim().toLowerCase();
-const cleanPhone = v => (v || "").replace(/\D/g,"");
-const cleanName = v => (v || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+const cleanPhone = v => {
+  const digits = (v || "").replace(/\D/g,"");
+  return (digits.length === 10 || digits.length === 11) ? `55${digits}` : digits;
+}
+  const cleanName = v => (v || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
 const apiVersion = () => process.env.META_API_VERSION || "v24.0";
 
 app.get("/health", (_,res)=>res.json({ok:true, mode:process.env.META_MODE || "APP_EVENTS"}));
