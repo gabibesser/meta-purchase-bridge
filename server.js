@@ -19,6 +19,13 @@ const cleanPhone = v => {
   return (digits.length === 10 || digits.length === 11) ? `55${digits}` : digits;
 }
   const cleanName = v => (v || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+const cleanLocation = v => cleanName(v).replace(/[^a-z0-9]/g,"");
+const cleanBirthdate = v => {
+  const d = (v || "").replace(/\D/g,"");
+  if (d.length !== 8) return d;
+  if (/^\d{2}\/?\d{2}\/?\d{4}$/.test(v || "")) return d.slice(4) + d.slice(2,4) + d.slice(0,2);
+  return d;
+};
 const apiVersion = () => process.env.META_API_VERSION || "v24.0";
 
 app.get("/health", (_,res)=>res.json({ok:true, mode:process.env.META_MODE || "APP_EVENTS"}));
@@ -30,10 +37,18 @@ app.get("/api/buyers", async (_,res)=>{
 });
 
 app.post("/api/buyers", async (req,res)=>{
-  const {name,email,phone,value,currency="BRL"}=req.body;
+ const {name,last_name,email,phone,birthdate,city,state,value,currency="BRL"} = req.body;
   if(!name || value===undefined) return res.status(400).json({error:"Nome e valor são obrigatórios."});
   const {data,error}=await db.from("buyers").insert({
-    name,email:email||null,phone:phone||null,value:Number(value),currency
+   name,
+last_name: last_name || null,
+email: email || null,
+phone: phone || null,
+birthdate: birthdate || null,
+city: city || null,
+state: state || null,
+value: Number(value),
+currency
   }).select().single();
   if(error) return res.status(500).json({error:error.message});
   res.json(data);
@@ -74,6 +89,11 @@ async function sendAppEvents(buyer,eventId){
     event_id:eventId
   }; if(buyer.email) attrs.em = sha(cleanEmail(buyer.email));
 if(buyer.phone) attrs.ph = sha(cleanPhone(buyer.phone));
+  if(buyer.last_name) attrs.ln = sha(cleanName(buyer.last_name));
+if(buyer.birthdate) attrs.db = sha(cleanBirthdate(buyer.birthdate));
+if(buyer.city) attrs.ct = sha(cleanLocation(buyer.city));
+if(buyer.state) attrs.st = sha(cleanLocation(buyer.state));
+attrs.country = sha("br");
   // App Events exige parâmetros compatíveis com o App configurado na Meta.
   const form=new URLSearchParams();
   form.set("access_token",process.env.META_ACCESS_TOKEN);
